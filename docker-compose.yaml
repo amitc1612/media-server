@@ -1,0 +1,195 @@
+version: "3.9"
+
+networks:
+  media_server:
+    driver: bridge
+
+services:
+  # qBitTorrent
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    user: 1000:1000
+    networks:
+      - media_server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jerusalem
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - ~/media_server/qbittorrent:/config:z,U
+      - ~/media/downloads:/downloads:z,U
+    ports:
+      - 8080:8080    # Web UI
+      - 6881:6881    # Torrent port (TCP)
+      - 6881:6881/udp # Torrent port (UDP)
+    restart: always
+
+  # Plex Media Server
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    user: 1000:1000
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jerusalem
+      - PLEX_CLAIM=claim-s-faxQk4MgL6UXMGQuwu
+      - ADVERTISE_IP=http://10.100.102.164:32400/
+    volumes:
+      - ~/media_server/plex:/config:z,U
+      - ~/media/movies:/movies:z,U
+      - ~/media/tv:/tv:z,U
+      - ~/media/temp:/transcode:z,U
+    ports:
+      - 32400:32400/tcp
+      - 8324:8324/tcp
+      - 32469:32469/tcp
+      - 9000:1900/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    restart: always
+
+  # Radarr (Movies)
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    user: 1000:1000
+    networks:
+      - media_server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jerusalem
+    volumes:
+      - ~/media_server/radarr:/config:z,U
+      - ~/media/movies:/movies:z,U
+      - ~/media/downloads:/downloads:z,U
+    ports:
+      - 7878:7878
+    restart: always
+
+  # Sonarr (TV Shows)
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    user: 1000:1000
+    networks:
+      - media_server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jerusalem
+    volumes:
+      - ~/media_server/sonarr:/config:z,U
+      - ~/media/tv:/tv:z,U
+      - ~/media/downloads:/downloads:z,U
+    ports:
+      - 8989:8989
+    restart: always
+
+  # Prowlarr (Indexer Manager)
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    user: 1000:1000
+    networks:
+      - media_server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jerusalem
+    volumes:
+      - ~/media_server/prowlarr:/config:z,U
+    ports:
+      - 9696:9696
+    restart: always
+
+  # Overseerr (Media Requests)
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    user: 1000:1000
+    networks:
+      - media_server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jerusalem
+    volumes:
+      - ~/media_server/overseerr:/config:z,U
+    ports:
+      - 5055:5055
+    restart: always
+
+  # Bazarr (Subtitles)
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    user: 1000:1000
+    networks:
+      - media_server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jerusalem
+    volumes:
+      - ~/media_server/bazarr:/config:z,U
+      - ~/media/movies:/movies:z,U
+      - ~/media/tv:/tv:z,U
+    ports:
+      - 6767:6767
+    restart: always
+
+  # Heimdall (Home Page)
+  heimdall:
+    image: lscr.io/linuxserver/heimdall:latest
+    container_name: heimdall
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jerusalem
+    volumes:
+      - ~/media_server/heimdall:/config:z,U
+    ports:
+      - 8081:80
+    restart: always
+
+  # Tautulli (Plex Stats)
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli
+    restart: always
+    volumes:
+      - ~/media_server/tautulli:/config:z,U
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jerusalem
+    ports:
+      - 8181:8181
+ 
+  # Whisparr (Adult Content)
+  # whisparr:
+  #   image: ghcr.io/hotio/whisparr:latest
+  #   container_name: whisparr
+  #   user: 1000:1000
+  #   networks:
+  #     - media_server
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - UMASK=002
+  #     - TZ=Asia/Jerusalem
+  #   volumes:
+  #     - ~/media_server/whisparr:config:z,U
+  #     - ~/media/anime:/data/anime:z,U
+  #     - ~/media/downloads:/data/downloads:z,U
+  #   ports:
+  #     - 6969:6969
+  #   restart: always
