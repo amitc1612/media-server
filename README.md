@@ -31,10 +31,5 @@ mkdir -p \
 plex up
 ```
 
-## Contributing
-
-Forks are welcome, but probably not any pull requests..
-
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
+## Gurt
+yo
